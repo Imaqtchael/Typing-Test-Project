@@ -617,6 +617,14 @@ class Window(QMainWindow):
         self.textLabel.blockSignals(False)
 
     def generateHistory(self):
+        History()
+
+class History():
+    def __init__(self):
+        super(History, self).__init__()
+        self.initUI()
+
+    def initUI(self):
         global mode
         print(mode)
         accuDB = TinyDB('files/{}/accuracy/accuracy.json'.format(mode))
@@ -743,9 +751,9 @@ QTextEdit#UserTE, QTextEdit#PassTE {
 
 app = QApplication(sys.argv)
 app.setStyleSheet(stylesheet)
-win = LogIn()
+#win = LogIn()
 #win = WindowPick()
-#win = Window('random', 10)
+win = Window('random', 10)
 #win = History()
 win.show()
 sys.exit(app.exec_())
