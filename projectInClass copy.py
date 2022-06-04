@@ -6,8 +6,6 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
 from screeninfo import get_monitors
 from tinydb import TinyDB, Query
 from matplotlib import pyplot as plt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 import sys, random, datetime, requests, numpy as np
 
 HEIGHT, WIDTH = int(get_monitors()[1].height / 2), int(get_monitors()[1].width / 2)
