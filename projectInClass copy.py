@@ -14,29 +14,17 @@ Cmonitor = []
 for monitor in get_monitors():
     if not monitor.is_primary:
         Cmonitor = monitor
-#HEIGHT, WIDTH = int(HEIGHT * 1.7), int(WIDTH * 1.7)
 font20 = round(Cmonitor.height_mm * 0.06756756756756757)
 font15 = round(Cmonitor.height_mm * 0.05067567567567568)
 font12 = round(Cmonitor.height_mm * 0.04054054054054054)
 
-size30 = round(get_monitors()[0].height_mm * 0.10135135135135136)
-
-'''LOGIN_WINSIZE = [round(get_monitors()[1].width * 0.15625 ), round(get_monitors()[1].height * 0.12037037037037036 )]
-print(LOGIN_WINSIZE)
-print(font20)
-print(WIDTH, HEIGHT)'''
 
 db = TinyDB('files/account/account.json')
 User = Query()
 
-'''db.truncate()
-db.insert({'name': 'Justin', 'pass': 'atheist'})
-db.insert({'name': 'Barcenas', 'pass': 'atheista'})
-db.insert({'name': 'Janessa', 'pass': 'maganda'})
-db.insert({'name': 'Justine', 'pass': "janessa"})'''
 
-player = "Justin"
-mode = "random"
+player = ""
+mode = ""
 class LogIn(QWidget):
     def __init__(self):
         super(LogIn, self).__init__()
@@ -59,12 +47,11 @@ class LogIn(QWidget):
 
         self.nameTextEdit = QtWidgets.QTextEdit(self)
         self.nameTextEdit.setFont(QtGui.QFont("Roboto Mono", font15))
-        self.nameTextEdit.setMinimumHeight(size30)
+        self.nameTextEdit.setMinimumHeight(30)
         self.nameTextEdit.setObjectName("UserTE")
         self.nameTextEdit.textChanged.connect(self.checkUser)
         self.nameTextEdit.setTabChangesFocus(True)
         self.nameTextEdit.setVerticalScrollBarPolicy(Qt.Qt.ScrollBarAlwaysOff)
-        #self.nameTextEdit.installEventFilter(self)
 
         self.nameCursor = QtGui.QTextCursor(self.nameTextEdit.textCursor())
 
@@ -125,11 +112,7 @@ class LogIn(QWidget):
             
             self.nameTextEdit.setText("")
             self.passTextEdit.setText("")
-            
-            #self.passTextEdit.moveCursor(QtGui.QTextCursor.End)
-            #self.passCursor = QtGui.QTextCursor(self.passTextEdit.document().findBlockByLineNumber(0))
-            #self.passTextEdit.setTextCursor(self.passCursor)
-            #print(self.passTextEdit.toPlainText())
+
             self.nameTextEdit.setFocus()
         print(db.all())
 
@@ -170,20 +153,6 @@ class LogIn(QWidget):
         print("{} {} {}".format(userName, textLength, self.results))
         self.nameTextEdit.blockSignals(False)
         self.nameTextEdit.moveCursor(QtGui.QTextCursor.End)
-        #self.nameCursor.setPosition(textLength)
-        #self.nameTextEdit.setTextCursor(self.nameCursor)
-        '''self.nameTextEdit.blockSignals(True)
-        userName = self.nameTextEdit.toPlainText()
-        print(userName)
-
-        if userName != "admin":
-            self.nameTextEdit.setText("<font color='red'><u>{}</u></font>".format(userName))
-        else:
-            self.nameTextEdit.setText("<font color='#D1D0C5'>{}</font>".format(userName))
-        self.nameTextEdit.blockSignals(False)
-        textLength = len(self.nameTextEdit.toPlainText())
-        self.nameCursor.setPosition(textLength)
-        self.nameTextEdit.setTextCursor(self.nameCursor)'''
 
     def checkPass(self):
         self.passTextEdit.blockSignals(True)
@@ -196,7 +165,6 @@ class LogIn(QWidget):
             self.passTextEdit.blockSignals(False)
             return
         passwordText = self.passTextEdit.toPlainText()
-        #passwordText = passwordText.strip("\n")
         textLength = len(passwordText)
         try:
             self.password += passwordText[-1]
@@ -206,12 +174,7 @@ class LogIn(QWidget):
         if self.password != textLength:
             self.password = self.password[:textLength]
         password = self.results[0]['pass']
-        '''try:
-            password = self.results[0]['pass']
-        except IndexError:
-            return'''
         print(password + " here")
-        #results = db.search(User.name == userName)
         mask = "*" * textLength
         if textLength > 8:
             passwordText = passwordText[:8]
@@ -234,32 +197,10 @@ class LogIn(QWidget):
         textLength = len(passwordText)
         print("{} {} {}".format(passwordText, textLength, self.results))
         self.passTextEdit.blockSignals(False)
-        #self.passCursor.setPosition(textLength)
-        #self.passTextEdit.setTextCursor(self.passCursor)
         self.passTextEdit.moveCursor(QtGui.QTextCursor.End)
-        
-        '''self.passTextEdit.blockSignals(True)
-        passWord = self.passTextEdit.toPlainText()[-1]
-        self.password += passWord
-        print(self.password)
-        if self.password != "admin":
-            self.passTextEdit.setText("<font color='red'><u>{}</u></font>".format("*" * len(self.password)))
-        else:
-            self.passTextEdit.setText("<font color='#D1D0C5'>{}</font>".format("*" * len(self.password)))
-        
-        textLength = len(self.passTextEdit.toPlainText())
-        if textLength == 8:
-            self.passTextEdit.setReadOnly(True)
-        self.passCursor.setPosition(textLength)
-        self.passTextEdit.setTextCursor(self.passCursor)
-        self.passTextEdit.blockSignals(False)
-        print("checkPass() Done...")'''
 
     def eventFilter(self, obj, event):
-        #print(self.passTextEdit.toPlainText())
         if event.type() == QtCore.QEvent.KeyPress and obj is self.passTextEdit:
-            '''if not event.text().isalnum():
-                return True'''
             if event.key() == QtCore.Qt.Key_Return:
                 if self.passTextEdit.toPlainText() == "" or self.nameTextEdit.toPlainText() == "":
                     pass
@@ -268,37 +209,9 @@ class LogIn(QWidget):
                 elif len(self.results) == 1:
                     self.login()
                 return True
-        '''elif event.type() == QtCore.QEvent.KeyPress and obj is self.nameTextEdit:
-            if event.key() == QtCore.Qt.Key_Return:
-                return True'''
             
-                    
-        #print(self.passTextEdit.toPlainText())        
+                       
         return super().eventFilter(obj, event)
-        '''if event.type() == QtCore.QEvent.KeyPress and (obj is self.passTextEdit or obj is self.nameTextEdit):
-            if event.key() == QtCore.Qt.Key_Backspace and obj is self.passTextEdit:
-                self.passTextEdit.blockSignals(True)
-                print("check: {}".format(self.password))
-                self.password = self.password[:-1]
-                print("check2: {}".format(self.password))
-                if self.password != "admin":
-                    self.passTextEdit.setText("<font color='red'><u>{}</u></font>".format(self.password))
-                else:
-                    self.passTextEdit.setText("<font color='#D1D0C5'>{}</font>".format(self.password))
-                #textLength = len(self.passTextEdit.toPlainText())
-                #self.passCursor.setPosition(textLength)
-                #self.passTextEdit.setTextCursor(self.passCursor)
-
-                self.passTextEdit.setReadOnly(False)
-                print(self.passTextEdit.toPlainText())
-                print(self.password)
-            elif event.key() == QtCore.Qt.Key_Return and self.password == "admin":
-                self.passTextEdit.blockSignals(True)
-                print("enter pressed")
-            else:
-                self.passTextEdit.blockSignals(False)
-            
-        return super().eventFilter(obj, event)'''
     
 class WindowPick(QWidget):
     def __init__(self):
@@ -372,29 +285,6 @@ class RandomLen(QWidget):
         elif event.text().isnumeric():
             self.wordNum += event.text()
         self.length.setText(self.wordNum)
-
-    def checkInput(self):
-        pass
-        '''isNum = self.length.toPlainText().isnumeric()
-        print("ha")
-        if (not isNum):
-            if len(self.length.toPlainText()) == 1:
-                print("nagtrue")
-                self.length.clear()
-            else:
-                print("nagfalse")
-                self.length.setText(self.length.toPlainText()[:-1])
-                self.cursor = self.length.textCursor()
-                self.cursor.setPosition(len(self.length.toPlainText()))
-                self.length.setTextCursor(self.cursor)
-        try:
-            numWords = int(self.length.toPlainText())
-            print(numWords)
-        except ValueError:
-            if len(self.length.toPlainText()) == 1:
-                self.length.clear()
-            else:
-                self.length.setText(self.length.toPlainText()[:-1])'''
 
 class Window(QMainWindow):
     def __init__(self, mode, num=None):
@@ -485,7 +375,6 @@ class Window(QMainWindow):
         self.textLabel.installEventFilter(self)
         self.textLabel.viewport().installEventFilter(self)
         self.textLabel.setVerticalScrollBarPolicy(Qt.Qt.ScrollBarAlwaysOff)
-        #self.textLabel.cursorPositionChanged.connect(self.moveScrollBar)
 
         self.textCursor = QtGui.QTextCursor(self.textLabel.textCursor())
         
@@ -496,12 +385,9 @@ class Window(QMainWindow):
         self.info.setHidden(True)
 
         self.BVlayout.addWidget(self.textLabel)
-        #self.BVlayout.addSpacing(10)
         self.BVlayout.addWidget(self.info)
 
         #adding textspacer and right to THlayout
-        #self.THlayout.addWidget(self.info)
-        #self.THlayout.setSpacing(100)
         self.THlayout.addStretch()
         self.THlayout.addWidget(self.right)
       
@@ -520,8 +406,6 @@ class Window(QMainWindow):
         
         self.BHlayout.addWidget(self.nextButton, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
         self.BHlayout.addWidget(self.restartButton, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
-
-        #adding button1 and input to BVlayout
         
         print("Done initUI()")
 
@@ -601,8 +485,6 @@ class Window(QMainWindow):
             self.secs = int(self.elapsed.total_seconds())
             self.elapsedText = "elapsed time: <font color='#E2B714'>{}</font><font color='red'>s</font>".format(self.secs)
             self.elapsedTime.setText(self.elapsedText)
-        
-        #print("Done setting time")
 
     def setWPM(self):
         self.elapsed = self.now - self.start
@@ -617,26 +499,8 @@ class Window(QMainWindow):
             self.accuText = "accuracy: <font color='#E2B714'>{}</font><font color='red'>%</font>".format(self.accuracy)
             self.accu.setText(self.accuText)
         except ZeroDivisionError:
-            #print("have an error")
             pass
         
-        #print("accu reset")
-
-    '''def keyPressEvent(self, event):
-        if event.key() == Qt.Qt.Key_Return and self.inputText == "":
-            self.newParagraph()
-        else:
-            if event.key() == Qt.Qt.Key_Backspace:
-                self.inputText = self.inputText[:-1]
-            elif not self.readOnly:
-                self.inputText += event.text()
-                print(len(self.inputText))
-
-            elif event.key() == Qt.Qt.Key_Space or event.key() == Qt.Qt.Key_Return:
-                self.newParagraph()
-            print("typed: {}".format(self.inputText))
-            print("he")
-            self.checkInput()'''
 
     def eventFilter(self, obj, event):
         if obj is self.textLabel.viewport() and (event.type() == QtCore.QEvent.MouseButtonPress or event.type() == QtCore.QEvent.MouseButtonDblClick):
@@ -810,8 +674,6 @@ class Window(QMainWindow):
         win.setWindowTitle("History Data: [{}]".format(mode.capitalize()))
         win.setWindowIcon(QtGui.QIcon("files/pictures/icon.png"))
         
-        
-        #plt.suptitle("History Profile", color='#D1D0C5')
 
         plt.subplots_adjust(left=0.1,
                             bottom=0.1, 
@@ -819,101 +681,8 @@ class Window(QMainWindow):
                             top=0.9, 
                             wspace=0.4, 
                             hspace=0.4)
-
-        #plt.close()
         
         plt.show()
-
-    def moveScrollBar(self):
-        #cursorPos = self.textLabel.cursorRect().top()
-        #print('cursorPos: ' + str(cursorPos))
-        #scrollbar = self.textLabel.verticalScrollBar()
-        
-        #scrollbar.setValue(scrollbar.value() + cursorPos - 100)
-        #scrollbar = self.textLabel.verticalScrollBar()
-        #self.textLabel.verticalScrollBar().setValue(scrollbar.value() + cursorPos - 50)
-        #self.textLabel.setVerticalScrollBar(scrollbar)
-
-        pass
-        
-class History(QMainWindow):
-    def __init__(self):
-        super(History, self).__init__()
-
-        self.figure = Figure()
-        self.canvas = FigureCanvasQTAgg(self.figure)
-        self.setCentralWidget(self.canvas)
-
-        global mode
-        print(mode)
-        accuDB = TinyDB('files/{}/accuracy/accuracy.json'.format(mode))
-        wpmDB = TinyDB('files/{}/wpm/wpm.json'.format(mode))
-
-        accuList = accuDB.search(User.name == player)[0]['accuracyList']
-        wpmList = wpmDB.search(User.name == player)[0]['wpmList']
-        print(accuList)
-        print(wpmList)
-
-        accu = accuDB.search(User.name == player)[0]['accuracy']
-        wpm = wpmDB.search(User.name == player)[0]['wpm']
-
-        font1 = {'family': 'Roboto Mono', 'color': 'red', 'size': 10}
-        font2 = {'family': 'Roboto Mono', 'color': '#E2B714', 'size': 10}
-        font3 = {'family': 'Roboto Mono', 'color': '#D1D0C5', 'size': 10}
-
-        Aypoints = np.array(accuList)
-        Wypoints = np.array(wpmList)
-
-        
-
-        plt.rcParams['axes.facecolor'] = '#323437'
-        plt.rcParams['axes.edgecolor'] = '#646669'
-        plt.rcParams['xtick.color'] = '#D1D0C5'
-        plt.rcParams['ytick.color'] = '#D1D0C5'
-        plt.rcParams['toolbar'] = 'None'
-        plt.rcParams['figure.facecolor'] = '#323437'
-        #plt.rcParams['figure.figsize'] = (7.5, 6)
-
-        fig, ax = self.figure.subplots(2, 1, sharex=True)
-
-        self.figure.text(0.20, 0.95, "average wpm: ", ha="center", va="bottom", fontdict=font3)
-        self.figure.text(0.30, 0.95, "{}".format(int(wpm)), ha="center", va="bottom", fontdict=font1)
-        self.figure.text(0.65,0.95,"average accuracy: ", ha="center", va="bottom", fontdict=font3)
-        self.figure.text(0.77,0.95,"{}".format(int(accu)), ha="center", va="bottom", fontdict=font2)
-        self.figure.text(0.795,0.95,"%", ha="center", va="bottom", fontdict=font1)
-
-        ax.plot(Wypoints, color='r')
-        #ax[0].set_xlim(xmin=1)
-        ax.grid()
-        #ax[0].set_xlabel("Number of Tests", fontdict=font3)
-        ax.set_ylabel("Words per minute", fontdict=font1)
-
-        ax.plot(Aypoints, color='#E2B714')
-        #ax[1].set_xlim(xmin=1)
-        ax.grid()
-        ax.set_xlabel("Number of Tests", fontdict=font3)
-        ax.set_ylabel("Accuracy", fontdict=font2)
-
-        print(type(fig))
-        print(type(ax))
-       
-        
-        self.setFixedHeight(self.height())
-        self.setMinimumWidth(self.width())
-        self.setWindowTitle("History Data: [{}]".format(mode.capitalize()))
-        self.setWindowIcon(QtGui.QIcon("files/pictures/icon.png"))
-        
-        
-        #plt.suptitle("History Profile", color='#D1D0C5')
-
-        self.figure.subplots_adjust(left=0.1,
-                            bottom=0.1, 
-                            right=0.9, 
-                            top=0.9, 
-                            wspace=0.4, 
-                            hspace=0.4)
-
-
 
 stylesheet = """
 QWidget {
@@ -974,9 +743,9 @@ QTextEdit#UserTE, QTextEdit#PassTE {
 
 app = QApplication(sys.argv)
 app.setStyleSheet(stylesheet)
-#win = LogIn()
+win = LogIn()
 #win = WindowPick()
-win = Window('random', 100)
+#win = Window('random', 10)
 #win = History()
 win.show()
 sys.exit(app.exec_())
