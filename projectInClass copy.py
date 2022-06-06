@@ -1,7 +1,5 @@
-from tkinter import Canvas
 from bs4 import BeautifulSoup
-from PyQt5 import Qt
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui, Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
 from screeninfo import get_monitors
 from tinydb import TinyDB, Query
@@ -9,6 +7,19 @@ from matplotlib import pyplot as plt
 import sys, random, datetime, requests, numpy as np
 
 HEIGHT, WIDTH = int(get_monitors()[1].height / 2), int(get_monitors()[1].width / 2)
+
+plt.ion()
+
+plt.rcParams['axes.facecolor'] = '#323437'
+plt.rcParams['axes.edgecolor'] = '#646669'
+plt.rcParams['xtick.color'] = '#D1D0C5'
+plt.rcParams['ytick.color'] = '#D1D0C5'
+plt.rcParams['toolbar'] = 'None'
+plt.rcParams['figure.facecolor'] = '#323437'
+
+font1 = {'family': 'Roboto Mono', 'color': 'red', 'size': 10}
+font2 = {'family': 'Roboto Mono', 'color': '#E2B714', 'size': 10}
+font3 = {'family': 'Roboto Mono', 'color': '#D1D0C5', 'size': 10}
 
 Cmonitor = []
 for monitor in get_monitors():
@@ -303,6 +314,8 @@ class Window(QMainWindow):
         self.inputText = ""
         self.wordsPM = 0
         self.accuracy = 0
+        print("mode: " + mode)
+        self.history = History(self.mode)
         self.initUI()
         self.textLabel.setFocus(True)
         self.newParagraph()
@@ -428,6 +441,7 @@ class Window(QMainWindow):
         self.accu.setText("accuracy: ")
         self.wpm.setText("wpm: ")
         self.elapsedTime.setText("elapsed time: ")
+        self.elapsedTime.setFont(QtGui.QFont('Roboto Mono', font15))
 
         #removing input.isReadonly if the user goes to new paragraph
         self.textLabel.setReadOnly(False)
@@ -481,6 +495,7 @@ class Window(QMainWindow):
             self.secs = int(self.elapsed.total_seconds()) % 60
             self.elapsedText = "elapsed time: <font color='#E2B714'>{}</font><font color='red'>min/s</font> <font color='#E2B714'>{}</font><font color='red'>s</font>".format(self.mins, self.secs)
             self.elapsedTime.setText(self.elapsedText)
+            self.elapsedTime.setFont(QtGui.QFont('Roboto Mono', font12))
         else:
             self.secs = int(self.elapsed.total_seconds())
             self.elapsedText = "elapsed time: <font color='#E2B714'>{}</font><font color='red'>s</font>".format(self.secs)
@@ -614,69 +629,81 @@ class Window(QMainWindow):
             wpmUp = wpmDB.search(User.name == player)
             self.info.setHidden(False)
             self.textLabel.setReadOnly(True)
+            if plt.fignum_exists(1):
+                self.history.update()
         self.textLabel.blockSignals(False)
 
     def generateHistory(self):
-        History()
+        if plt.fignum_exists(1):
+            self.history.update()
+        else:
+            self.history.show()
 
 class History():
-    def __init__(self):
+    def __init__(self, mode):
         super(History, self).__init__()
-        self.initUI()
+        print("mode: " + mode)
+        self.accuDB = TinyDB('files/{}/accuracy/accuracy.json'.format(mode))
+        self.wpmDB = TinyDB('files/{}/wpm/wpm.json'.format(mode))
+        self.accuList, self.wpmList = None, None
+        self.accu, self.wpm = None, None
+        self.fig, self.ax = None, None
 
-    def initUI(self):
-        global mode
-        print(mode)
-        accuDB = TinyDB('files/{}/accuracy/accuracy.json'.format(mode))
-        wpmDB = TinyDB('files/{}/wpm/wpm.json'.format(mode))
+    def show(self):
+        self.accuList = self.accuDB.search(User.name == player)[0]['accuracyList']
+        self.wpmList = self.wpmDB.search(User.name == player)[0]['wpmList']
+        
+        print(self.accuList)
+        print(self.wpmList)
 
-        accuList = accuDB.search(User.name == player)[0]['accuracyList']
-        wpmList = wpmDB.search(User.name == player)[0]['wpmList']
-        print(accuList)
-        print(wpmList)
+        accu = self.accuDB.search(User.name == player)[0]['accuracy']
+        wpm = self.wpmDB.search(User.name == player)[0]['wpm']
 
-        accu = accuDB.search(User.name == player)[0]['accuracy']
-        wpm = wpmDB.search(User.name == player)[0]['wpm']
+        Aypoints = np.array(self.accuList)
+        Wypoints = np.array(self.wpmList)
 
-        font1 = {'family': 'Roboto Mono', 'color': 'red', 'size': 10}
-        font2 = {'family': 'Roboto Mono', 'color': '#E2B714', 'size': 10}
-        font3 = {'family': 'Roboto Mono', 'color': '#D1D0C5', 'size': 10}
+        maxAccu = max(self.accuList)
+        maxAX = self.accuList.index(maxAccu)
+        maxWPM = max(self.wpmList)
+        maxWX = self.wpmList.index(maxWPM)
 
-        Aypoints = np.array(accuList)
-        Wypoints = np.array(wpmList)
+        minAccu = min(self.accuList)
+        minAX = self.accuList.index(minAccu)
+        minWPM = min(self.wpmList)
+        minWX = self.wpmList.index(minWPM)
+        #print(f"{maxAccu}: {maxAY}: {maxWPM}: {maxWY}")
 
-        plt.rcParams['axes.facecolor'] = '#323437'
-        plt.rcParams['axes.edgecolor'] = '#646669'
-        plt.rcParams['xtick.color'] = '#D1D0C5'
-        plt.rcParams['ytick.color'] = '#D1D0C5'
-        plt.rcParams['toolbar'] = 'None'
-        plt.rcParams['figure.facecolor'] = '#323437'
+        
         #plt.rcParams['figure.figsize'] = (7.5, 6)
 
-        fig, ax = plt.subplots(2, 1, sharex=True)
+        self.fig, self.ax = plt.subplots(2, 1, sharex=True)
 
-        fig.text(0.20, 0.95, "average wpm: ", ha="center", va="bottom", fontdict=font3)
-        fig.text(0.30, 0.95, "{}".format(int(wpm)), ha="center", va="bottom", fontdict=font1)
-        fig.text(0.65,0.95,"average accuracy: ", ha="center", va="bottom", fontdict=font3)
-        fig.text(0.77,0.95,"{}".format(int(accu)), ha="center", va="bottom", fontdict=font2)
-        fig.text(0.795,0.95,"%", ha="center", va="bottom", fontdict=font1)
+        self.fig.text(0.20, 0.95, "average wpm: ", ha="center", va="bottom", fontdict=font3)
+        self.fig.text(0.30, 0.95, "{}".format(int(wpm)), ha="center", va="bottom", fontdict=font1)
+        self.fig.text(0.65,0.95,"average accuracy: ", ha="center", va="bottom", fontdict=font3)
+        self.fig.text(0.77,0.95,"{}".format(int(accu)), ha="center", va="bottom", fontdict=font2)
+        self.fig.text(0.795,0.95,"%", ha="center", va="bottom", fontdict=font1)
 
-        ax[0].plot(Wypoints, color='r')
+        self.wpm, = self.ax[0].plot(Wypoints, color='r')
+        self.ax[0].plot(maxWX, maxWPM, 'wo', mec='r')
+        self.ax[0].plot(minWX, minWPM, 'ro',)
+        #self.ax[0].plot(Wypoints, color='r')
         #ax[0].set_xlim(xmin=1)
-        ax[0].grid()
+        self.ax[0].grid()
         #ax[0].set_xlabel("Number of Tests", fontdict=font3)
-        ax[0].set_ylabel("Words per minute", fontdict=font1)
+        self.ax[0].set_ylabel("Words per minute", fontdict=font1)
 
-        ax[1].plot(Aypoints, color='#E2B714')
-        #ax[1].set_xlim(xmin=1)
-        ax[1].grid()
-        ax[1].set_xlabel("Number of Tests", fontdict=font3)
-        ax[1].set_ylabel("Accuracy", fontdict=font2)
+        self.accu, = self.ax[1].plot(Aypoints, color='#E2B714')
+        self.ax[1].plot(maxAX, maxAccu, 'wo', mec='#E2B714')
+        self.ax[1].plot(minAX, minAccu, 'o', mec='#E2B714', color='#E2B714')
+        #self.ax[1].plot(Aypoints, color='#E2B714')
+        self.ax[1].set_ylim(ymax=100)
+        self.ax[1].grid()
+        self.ax[1].set_xlabel("Number of Tests", fontdict=font3)
+        self.ax[1].set_ylabel("Accuracy", fontdict=font2)
 
-        print(type(fig))
-        print(type(ax))
        
-        win = fig.canvas.window()
+        win = self.fig.canvas.window()
         win.setFixedHeight(win.height())
         win.setMinimumWidth(win.width())
         win.setWindowTitle("History Data: [{}]".format(mode.capitalize()))
@@ -689,8 +716,77 @@ class History():
                             top=0.9, 
                             wspace=0.4, 
                             hspace=0.4)
+
+        print("Done showing...")
         
-        plt.show()
+    def update(self):
+        self.accuDB = TinyDB('files/{}/accuracy/accuracy.json'.format(mode))
+        self.wpmDB = TinyDB('files/{}/wpm/wpm.json'.format(mode))
+
+        self.accuList = self.accuDB.search(User.name == player)[0]['accuracyList']
+        self.wpmList = self.wpmDB.search(User.name == player)[0]['wpmList']
+        
+        print(self.accuList)
+        print(self.wpmList)
+
+        accu = self.accuDB.search(User.name == player)[0]['accuracy']
+        wpm = self.wpmDB.search(User.name == player)[0]['wpm']
+
+        Aypoints = np.array(self.accuList)
+        Wypoints = np.array(self.wpmList)
+
+        print(Aypoints)
+        print(Wypoints)
+
+        '''self.accu.set_xdata(Aypoints)
+        self.accu.set_ydata(np.array(range(len(Aypoints))))
+        
+        self.wpm.set_xdata(Wypoints)
+        self.wpm.set_ydata(np.array(range(len(Wypoints))))'''
+
+        self.ax[0].cla()
+        self.ax[1].cla()
+
+        
+        
+
+        self.ax[0].set_ylabel("Words per minute", fontdict=font1)
+
+        self.ax[1].set_xlabel("Number of Tests", fontdict=font3)
+        self.ax[1].set_ylabel("Accuracy", fontdict=font2)
+
+        
+
+
+        #elf.ax[1].set_ylim(ymax=100)'''
+
+        self.wpm, = self.ax[0].plot(Wypoints, color='r')
+        self.accu, = self.ax[1].plot(Aypoints, color='#E2B714')
+
+        maxAccu = max(self.accuList)
+        maxAX = self.accuList.index(maxAccu)
+        maxWPM = max(self.wpmList)
+        maxWX = self.wpmList.index(maxWPM)
+
+        minAccu = min(self.accuList)
+        minAX = self.accuList.index(minAccu)
+        minWPM = min(self.wpmList)
+        minWX = self.wpmList.index(minWPM)
+
+        self.ax[0].plot(maxWX, maxWPM, 'wo', mec='r')
+        self.ax[0].plot(minWX, minWPM, 'ro',)
+        self.ax[0].grid()
+
+        self.ax[1].plot(maxAX, maxAccu, 'wo', mec='#E2B714')
+        self.ax[1].plot(minAX, minAccu, 'o', mec='#E2B714', color='#E2B714')
+        self.ax[1].set_ylim(ymax=100)
+        self.ax[1].grid()
+
+        
+        #self.fig.canvas.flush_events()
+        print(self.fig.number)
+        print("Done updating...")
+        
 
 stylesheet = """
 QWidget {
@@ -751,9 +847,9 @@ QTextEdit#UserTE, QTextEdit#PassTE {
 
 app = QApplication(sys.argv)
 app.setStyleSheet(stylesheet)
-#win = LogIn()
+win = LogIn()
 #win = WindowPick()
-win = Window('random', 10)
+#win = Window('random', 1)
 #win = History()
 win.show()
 sys.exit(app.exec_())

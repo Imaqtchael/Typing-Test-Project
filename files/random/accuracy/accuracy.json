@@ -1,1 +1,1 @@
-{"_default": {"1": {"name": "Justin", "accuracy": 91.66666666666667, "accuracyList": [99, 85, 91]}, "2": {"name": "Janessa", "accuracy": 45, "accuracyList": [45]}}}
+{"_default": {"1": {"name": "Justin", "accuracy": 79.33333333333333, "accuracyList": [99, 85, 95, 100, 65, 90, 12, 10, 97, 98, 89, 79, 94, 89, 88]}, "2": {"name": "Janessa", "accuracy": 45, "accuracyList": [45]}, "3": {"name": "test", "accuracy": 94.66666666666667, "accuracyList": [91, 100, 100, 100, 77, 100]}}}

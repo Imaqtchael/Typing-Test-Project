@@ -40,8 +40,8 @@ class History():
         font2 = {'family': 'Roboto Mono', 'color': '#E2B714', 'size': 10}
         font3 = {'family': 'Roboto Mono', 'color': '#D1D0C5', 'size': 10}
 
-        Aypoints = np.array(self.accuList)
-        Wypoints = np.array(self.wpmList)
+        Aypoints = np.array([6])
+        Wypoints = np.array([6])
 
         
         #plt.rcParams['figure.figsize'] = (7.5, 6)
@@ -54,7 +54,7 @@ class History():
         self.fig.text(0.77,0.95,"{}".format(int(accu)), ha="center", va="bottom", fontdict=font2)
         self.fig.text(0.795,0.95,"%", ha="center", va="bottom", fontdict=font1)
 
-        self.wpm, = self.ax[0].plot(Wypoints, color='r')
+        self.wpm, = self.ax[0].plot(Wypoints, Wypoints, 'ro')
         #self.ax[0].plot(Wypoints, color='r')
         #ax[0].set_xlim(xmin=1)
         self.ax[0].grid()
@@ -120,9 +120,7 @@ class History():
 history = History()
 history.show()
 input("Before update\n")
-for i in range(10):
+'''for i in range(10):
     history.update()
-
-    
-
-    input("Press any key: ")
+    print(plt.fignum_exists(1))
+    input("Press any key: ")'''
