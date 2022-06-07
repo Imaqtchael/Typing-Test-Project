@@ -4,7 +4,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
 from screeninfo import get_monitors
 from tinydb import TinyDB, Query
 from matplotlib import pyplot as plt
-import sys, random, datetime, requests, numpy as np
+import sys, random, datetime, requests, numpy as np, faulthandler
+
+faulthandler.enable()
 
 HEIGHT, WIDTH = int(get_monitors()[1].height / 2), int(get_monitors()[1].width / 2)
 
@@ -34,8 +36,8 @@ db = TinyDB('files/account/account.json')
 User = Query()
 
 
-player = ""
-mode = ""
+player = "Justin"
+mode = "random"
 class LogIn(QWidget):
     def __init__(self):
         super(LogIn, self).__init__()
@@ -388,6 +390,9 @@ class Window(QMainWindow):
         self.textLabel.installEventFilter(self)
         self.textLabel.viewport().installEventFilter(self)
         self.textLabel.setVerticalScrollBarPolicy(Qt.Qt.ScrollBarAlwaysOff)
+        self.textLabel.verticalScrollBar().valueChanged.connect(self.moveScrollBar)
+        self.textLabel.verticalScrollBar().setDisabled(True)
+        
 
         self.textCursor = QtGui.QTextCursor(self.textLabel.textCursor())
         
@@ -421,6 +426,14 @@ class Window(QMainWindow):
         self.BHlayout.addWidget(self.restartButton, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
         
         print("Done initUI()")
+
+    def moveScrollBar(self):
+        self.textLabel.verticalScrollBar().blockSignals(True)
+        print(f"before: {self.textLabel.verticalScrollBar().value()}")
+        self.textLabel.verticalScrollBar().setSliderPosition(self.textLabel.verticalScrollBar().value() + 66)
+        print(f"after: {self.textLabel.verticalScrollBar().value()}")
+        
+        self.textLabel.verticalScrollBar().blockSignals(False)
 
     def newParagraph(self):
         if self.mode == "paragraph":
@@ -554,7 +567,6 @@ class Window(QMainWindow):
 
     def checkInput(self):
         self.textLabel.blockSignals(True)
-        self.textLabel.verticalScrollBar().setValue(self.textLabel.verticalScrollBar().minimum())
         if self.pressedBS == False:
             cursorPos = self.textLabel.textCursor().position()
             print("cursor is at: " + str(cursorPos))
@@ -706,7 +718,7 @@ class History():
         win = self.fig.canvas.window()
         win.setFixedHeight(win.height())
         win.setMinimumWidth(win.width())
-        win.setWindowTitle("History Data: [{}]".format(mode.capitalize()))
+        win.setWindowTitle("History Data: {}".format(mode.capitalize()))
         win.setWindowIcon(QtGui.QIcon("files/pictures/icon.png"))
         
 
@@ -847,9 +859,9 @@ QTextEdit#UserTE, QTextEdit#PassTE {
 
 app = QApplication(sys.argv)
 app.setStyleSheet(stylesheet)
-win = LogIn()
+#win = LogIn()
 #win = WindowPick()
-#win = Window('random', 1)
+win = Window('random', 200)
 #win = History()
 win.show()
 sys.exit(app.exec_())
