@@ -36,8 +36,8 @@ db = TinyDB('files/account/account.json')
 User = Query()
 
 
-player = "Justin"
-mode = "random"
+player = ""
+mode = ""
 class LogIn(QWidget):
     def __init__(self):
         super(LogIn, self).__init__()
@@ -654,6 +654,8 @@ class Window(QMainWindow):
 class History():
     def __init__(self, mode):
         super(History, self).__init__()
+        if plt.fignum_exists(1):
+            plt.close(1)
         print("mode: " + mode)
         self.accuDB = TinyDB('files/{}/accuracy/accuracy.json'.format(mode))
         self.wpmDB = TinyDB('files/{}/wpm/wpm.json'.format(mode))
@@ -750,27 +752,20 @@ class History():
         print(Aypoints)
         print(Wypoints)
 
-        '''self.accu.set_xdata(Aypoints)
-        self.accu.set_ydata(np.array(range(len(Aypoints))))
-        
-        self.wpm.set_xdata(Wypoints)
-        self.wpm.set_ydata(np.array(range(len(Wypoints))))'''
-
         self.ax[0].cla()
         self.ax[1].cla()
 
-        
-        
+        self.fig.text(0.20, 0.95, "average wpm: ", ha="center", va="bottom", fontdict=font3)
+        self.fig.text(0.30, 0.95, "{}".format(int(wpm)), ha="center", va="bottom", fontdict=font1)
+        self.fig.text(0.65,0.95,"average accuracy: ", ha="center", va="bottom", fontdict=font3)
+        self.fig.text(0.77,0.95,"{}".format(int(accu)), ha="center", va="bottom", fontdict=font2)
+        self.fig.text(0.795,0.95,"%", ha="center", va="bottom", fontdict=font1)
+
 
         self.ax[0].set_ylabel("Words per minute", fontdict=font1)
 
         self.ax[1].set_xlabel("Number of Tests", fontdict=font3)
         self.ax[1].set_ylabel("Accuracy", fontdict=font2)
-
-        
-
-
-        #elf.ax[1].set_ylim(ymax=100)'''
 
         self.wpm, = self.ax[0].plot(Wypoints, color='r')
         self.accu, = self.ax[1].plot(Aypoints, color='#E2B714')
@@ -840,6 +835,16 @@ QPushButton#restartButton {
     background-image: url(files/pictures/restart.png);
 }
 
+QPushButton#nextButton:hover {
+    background-repeat: no-repeat;
+    background-image: url(files/pictures/next_hover.png);
+}
+
+QPushButton#restartButton:hover {
+    background-repeat: no-repeat;
+    background-image: url(files/pictures/restart_hover.png);
+}
+
 QPushButton#chooseParagraph:hover, QPushButton#chooseRandom:hover, QPushButton#login:hover, QPushButton#create:hover {
     color: #D1D0C5;
 }
@@ -859,9 +864,10 @@ QTextEdit#UserTE, QTextEdit#PassTE {
 
 app = QApplication(sys.argv)
 app.setStyleSheet(stylesheet)
-#win = LogIn()
+win = LogIn()
 #win = WindowPick()
-win = Window('random', 200)
+#win = Window('random', 200)
+#win = Window("paragraph")
 #win = History()
 win.show()
 sys.exit(app.exec_())
