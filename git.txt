@@ -1,0 +1,13 @@
+init a folder:	git init
+check uncommitted files:	git status
+add files to stage area:	git add <filename>
+add all files to stage area:	git add -A
+committ files:	git committ -m "<message>"
+ignore some files:	create .gitignore file then add the files or files extension there
+remove files in stage area:	git reset <filename>
+remove all files in stage are:	git reset
+view commit log/s:	git log
+clone a remote repository:	git clone <url> <where to clone>
+view changes made in the code:	git diff
+pull all changes from remote:	git pull origin master
+push all changes to remote:	git push origin master
