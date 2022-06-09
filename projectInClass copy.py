@@ -138,8 +138,9 @@ class LogIn(QWidget):
             self.nameTextEdit.setText("")
             self.passTextEdit.setText("")
             self.nameTextEdit.setFocus()
-            self.win = WindowPick()
+            self.win = WindowPick(self)
             self.win.show()
+            self.hide()
 
     def checkUser(self):
         self.nameTextEdit.blockSignals(True)
@@ -227,12 +228,13 @@ class LogIn(QWidget):
         return super().eventFilter(obj, event)
     
 class WindowPick(QWidget):
-    def __init__(self):
+    def __init__(self, parent):
         super(WindowPick, self).__init__()
         self.setFixedSize(250, 80)
         self.setWindowTitle("Choose Mode")
         self.mode = ""
         self.initUI()
+        self.parent = parent
 
     def initUI(self):
         self.Hlayout = QtWidgets.QHBoxLayout(self)
@@ -253,23 +255,29 @@ class WindowPick(QWidget):
         self.Hlayout.addWidget(self.randomWord, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
         
     def isRandom(self):
-        self.win = RandomLen()
+        self.win = RandomLen(self)
         self.win.show()
+        self.hide()
     
     def isParagraph(self):
-        self.win = Window("paragraph")
+        self.win = Window("paragraph", parent=self)
         global mode 
         mode = "paragraph"
         self.win.show()
+        self.hide()
+
+    def closeEvent(self, event):
+        self.parent.show()
 
 class RandomLen(QWidget):
-    def __init__(self):
+    def __init__(self, parent):
         super(RandomLen, self).__init__() 
         self.setFixedSize(300, 58)
         self.setWindowTitle("Choose length")
         self.wordNum = ""
         self.num = 0
         self.initUI()
+        self.parent = parent
 
     def initUI(self):
         self.layout = QtWidgets.QHBoxLayout(self)
@@ -291,7 +299,7 @@ class RandomLen(QWidget):
             self.wordNum = self.wordNum[:-1]
         elif event.key() == Qt.Qt.Key_Return:
             self.num = int(self.wordNum)
-            self.win = Window("random", self.num)
+            self.win = Window("random", self, self.num)
             global mode 
             mode = "random"
             self.win.show()
@@ -299,8 +307,11 @@ class RandomLen(QWidget):
             self.wordNum += event.text()
         self.length.setText(self.wordNum)
 
+    def closeEvent(self, event):
+        self.parent.show()
+
 class Window(QMainWindow):
-    def __init__(self, mode, num=None):
+    def __init__(self, mode, parent, num=None):
         super(Window, self).__init__()
         self.setFixedSize(WIDTH, HEIGHT)
         self.setWindowTitle("Typing Test")
@@ -316,6 +327,7 @@ class Window(QMainWindow):
         self.inputText = ""
         self.wordsPM = 0
         self.accuracy = 0
+        self.parent = parent
         print("mode: " + mode)
         self.history = History(self.mode)
         self.initUI()
@@ -481,10 +493,12 @@ class Window(QMainWindow):
 
 
     def getParagraph(self):
-        self.url = "https://randomword.com/paragraph"
+        randomSen = random.randint(2, 10)
+        self.url = f"http://metaphorpsum.com/paragraphs/1/{randomSen}"
         self.request = requests.get(self.url)
         self.doc = BeautifulSoup(self.request.text, "html.parser")
-        self.tags = self.doc.find("div", {"id": "random_word_definition"}).string
+        self.tags = self.doc.string
+
         print("Done getParagraph()")
         return self.tags
  
@@ -651,6 +665,9 @@ class Window(QMainWindow):
         else:
             self.history.show()
 
+    def closeEvent(self, event):
+        self.parent.show()
+
 class History():
     def __init__(self, mode):
         super(History, self).__init__()
@@ -697,6 +714,8 @@ class History():
         self.fig.text(0.65,0.95,"average accuracy: ", ha="center", va="bottom", fontdict=font3)
         self.fig.text(0.77,0.95,"{}".format(int(accu)), ha="center", va="bottom", fontdict=font2)
         self.fig.text(0.795,0.95,"%", ha="center", va="bottom", fontdict=font1)
+
+        print(f"texts: {self.fig.texts}")
 
         self.wpm, = self.ax[0].plot(Wypoints, color='r')
         self.ax[0].plot(maxWX, maxWPM, 'wo', mec='r')
@@ -754,6 +773,8 @@ class History():
 
         self.ax[0].cla()
         self.ax[1].cla()
+
+        self.fig.texts.clear()
 
         self.fig.text(0.20, 0.95, "average wpm: ", ha="center", va="bottom", fontdict=font3)
         self.fig.text(0.30, 0.95, "{}".format(int(wpm)), ha="center", va="bottom", fontdict=font1)
@@ -867,7 +888,7 @@ app.setStyleSheet(stylesheet)
 win = LogIn()
 #win = WindowPick()
 #win = Window('random', 200)
-#win = Window("paragraph")
+#win = Window("paragraph", None)
 #win = History()
 win.show()
 sys.exit(app.exec_())
