@@ -8,7 +8,7 @@ import sys, random, datetime, requests, numpy as np, faulthandler
 
 faulthandler.enable()
 
-HEIGHT, WIDTH = int(get_monitors()[1].height / 2), int(get_monitors()[1].width / 2)
+HEIGHT, WIDTH = int(get_monitors()[0].height / 2), int(get_monitors()[0].width / 2)
 
 plt.ion()
 
@@ -25,7 +25,7 @@ font3 = {'family': 'Roboto Mono', 'color': '#D1D0C5', 'size': 10}
 
 Cmonitor = []
 for monitor in get_monitors():
-    if not monitor.is_primary:
+    if monitor.is_primary:
         Cmonitor = monitor
 font20 = round(Cmonitor.height_mm * 0.06756756756756757)
 font15 = round(Cmonitor.height_mm * 0.05067567567567568)
@@ -36,7 +36,6 @@ db = TinyDB('files/account/account.json')
 User = Query()
 
 
-player = ""
 mode = ""
 class LogIn(QWidget):
     def __init__(self):
@@ -46,6 +45,7 @@ class LogIn(QWidget):
         self.initUI()
         self.results = []
         self.password = ""
+        self.player = ""
         
 
     def initUI(self):
@@ -133,12 +133,13 @@ class LogIn(QWidget):
         userName = self.nameTextEdit.toPlainText()
         passWord = self.password
         if self.results[0]['name'] == userName and passWord == self.results[0]['pass']:
-            global player
-            player = userName
+            self.player = userName
             self.nameTextEdit.setText("")
             self.passTextEdit.setText("")
             self.nameTextEdit.setFocus()
-            self.win = WindowPick(self)
+            with open("files/account/currentPlayer.txt", "w") as file:
+                file.write(self.player)
+            self.win = WindowPick(self.player, self)
             self.win.show()
             self.hide()
 
@@ -228,49 +229,69 @@ class LogIn(QWidget):
         return super().eventFilter(obj, event)
     
 class WindowPick(QWidget):
-    def __init__(self, parent):
+    def __init__(self, player, parent):
         super(WindowPick, self).__init__()
         self.setFixedSize(250, 80)
         self.setWindowTitle("Choose Mode")
         self.mode = ""
         self.initUI()
         self.parent = parent
+        self.player = player
 
     def initUI(self):
-        self.Hlayout = QtWidgets.QHBoxLayout(self)
+        self.grandLayout = QtWidgets.QVBoxLayout(self)
+
+        self.Hlayout = QtWidgets.QHBoxLayout()
+
+        self.logout = QtWidgets.QPushButton(self)
+        self.logout.setText("Log out")
+        self.logout.setFont(QtGui.QFont("Roboto Mono", font12))
+        self.logout.clicked.connect(self.Logout)
+        self.logout.setObjectName("windowPickButton")
+
+        self.grandLayout.addLayout(self.Hlayout)
+        self.grandLayout.addWidget(self.logout)
 
         self.paragraphMode = QtWidgets.QPushButton(self)
         self.paragraphMode.setText("PARAGRAPH")
         self.paragraphMode.setFont(QtGui.QFont("Roboto Mono", font15))
         self.paragraphMode.clicked.connect(self.isParagraph)
-        self.paragraphMode.setObjectName("chooseParagraph")
+        self.paragraphMode.setObjectName("windowPickButton")
 
         self.randomWord = QtWidgets.QPushButton(self)
         self.randomWord.setText("RANDOM")
         self.randomWord.setFont(QtGui.QFont("Roboto Mono", font15))
         self.randomWord.clicked.connect(self.isRandom)
-        self.randomWord.setObjectName("chooseRandom")
+        self.randomWord.setObjectName("windowPickButton")
 
         self.Hlayout.addWidget(self.paragraphMode, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
         self.Hlayout.addWidget(self.randomWord, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
         
     def isRandom(self):
-        self.win = RandomLen(self)
+        self.win = RandomLen(self.player, self)
         self.win.show()
         self.hide()
     
     def isParagraph(self):
-        self.win = Window("paragraph", parent=self)
+        self.win = Window(self.player, "paragraph", parent=self)
         global mode 
         mode = "paragraph"
         self.win.show()
         self.hide()
 
     def closeEvent(self, event):
+        with open('files/account/currentPlayer.txt', 'r') as file:
+            if file.read() != '':
+                return
+    
+    def Logout(self):
+        with open('files/account/currentPlayer.txt', 'w') as file:
+            file.write("")
+        self.close()
         self.parent.show()
 
 class RandomLen(QWidget):
-    def __init__(self, parent):
+    def __init__(self, player, parent):
         super(RandomLen, self).__init__() 
         self.setFixedSize(300, 58)
         self.setWindowTitle("Choose length")
@@ -278,6 +299,7 @@ class RandomLen(QWidget):
         self.num = 0
         self.initUI()
         self.parent = parent
+        self.player = player
 
     def initUI(self):
         self.layout = QtWidgets.QHBoxLayout(self)
@@ -299,7 +321,7 @@ class RandomLen(QWidget):
             self.wordNum = self.wordNum[:-1]
         elif event.key() == Qt.Qt.Key_Return:
             self.num = int(self.wordNum)
-            self.win = Window("random", self, self.num)
+            self.win = Window(self.player, "random", self, self.num)
             global mode 
             mode = "random"
             self.win.show()
@@ -311,7 +333,7 @@ class RandomLen(QWidget):
         self.parent.show()
 
 class Window(QMainWindow):
-    def __init__(self, mode, parent, num=None):
+    def __init__(self, player, mode, parent, num=None):
         super(Window, self).__init__()
         self.setFixedSize(WIDTH, HEIGHT)
         self.setWindowTitle("Typing Test")
@@ -329,7 +351,8 @@ class Window(QMainWindow):
         self.accuracy = 0
         self.parent = parent
         print("mode: " + mode)
-        self.history = History(self.mode)
+        self.player = player
+        self.history = History(self.player, self.mode)
         self.initUI()
         self.textLabel.setFocus(True)
         self.newParagraph()
@@ -634,25 +657,25 @@ class Window(QMainWindow):
             global mode
             accuDB = TinyDB("files/{}/accuracy/accuracy.json".format(mode))
             wpmDB = TinyDB("files/{}/wpm/wpm.json".format(mode))
-            accuList = accuDB.search(User.name == player)[0]['accuracyList']
-            wpmList = wpmDB.search(User.name == player)[0]['wpmList']
+            accuList = accuDB.search(User.name == self.player)[0]['accuracyList']
+            wpmList = wpmDB.search(User.name == self.player)[0]['wpmList']
             if len(accuList) == 0:
-                accuDB.update({'accuracy': self.accuracy, 'accuracyList': [self.accuracy]}, User.name == player)
+                accuDB.update({'accuracy': self.accuracy, 'accuracyList': [self.accuracy]}, User.name == self.player)
             else:
                 accuList.append(self.accuracy)
                 accuracy = sum(accuList)/len(accuList)
-                accuDB.update({'accuracy': accuracy, 'accuracyList': accuList}, User.name == player)
+                accuDB.update({'accuracy': accuracy, 'accuracyList': accuList}, User.name == self.player)
             if len(wpmList) == 0:
-                wpmDB.update({'wpm': self.wordsPM, 'wpmList': [self.wordsPM]}, User.name == player)
+                wpmDB.update({'wpm': self.wordsPM, 'wpmList': [self.wordsPM]}, User.name == self.player)
             else:
                 wpmList.append(self.wordsPM)
                 wpm = sum(wpmList)/len(wpmList)
-                wpmDB.update({'wpm': wpm, 'wpmList': wpmList}, User.name == player)
-            print(accuDB.search(User.name == player))
+                wpmDB.update({'wpm': wpm, 'wpmList': wpmList}, User.name == self.player)
+            '''print(accuDB.search(User.name == player))
             print(wpmDB.search(User.name == player))
-            print(accuList)
-            accuUp = accuDB.search(User.name == player)
-            wpmUp = wpmDB.search(User.name == player)
+            print(accuList)'''
+            '''accuUp = accuDB.search(User.name == player)
+            wpmUp = wpmDB.search(User.name == player)'''
             self.info.setHidden(False)
             self.textLabel.setReadOnly(True)
             if plt.fignum_exists(1):
@@ -666,10 +689,11 @@ class Window(QMainWindow):
             self.history.show()
 
     def closeEvent(self, event):
+        plt.close()
         self.parent.show()
 
 class History():
-    def __init__(self, mode):
+    def __init__(self, player, mode):
         super(History, self).__init__()
         if plt.fignum_exists(1):
             plt.close(1)
@@ -679,16 +703,17 @@ class History():
         self.accuList, self.wpmList = None, None
         self.accu, self.wpm = None, None
         self.fig, self.ax = None, None
+        self.player = player
 
     def show(self):
-        self.accuList = self.accuDB.search(User.name == player)[0]['accuracyList']
-        self.wpmList = self.wpmDB.search(User.name == player)[0]['wpmList']
+        self.accuList = self.accuDB.search(User.name == self.player)[0]['accuracyList']
+        self.wpmList = self.wpmDB.search(User.name == self.player)[0]['wpmList']
         
         print(self.accuList)
         print(self.wpmList)
 
-        accu = self.accuDB.search(User.name == player)[0]['accuracy']
-        wpm = self.wpmDB.search(User.name == player)[0]['wpm']
+        accu = self.accuDB.search(User.name == self.player)[0]['accuracy']
+        wpm = self.wpmDB.search(User.name == self.player)[0]['wpm']
 
         Aypoints = np.array(self.accuList)
         Wypoints = np.array(self.wpmList)
@@ -756,14 +781,14 @@ class History():
         self.accuDB = TinyDB('files/{}/accuracy/accuracy.json'.format(mode))
         self.wpmDB = TinyDB('files/{}/wpm/wpm.json'.format(mode))
 
-        self.accuList = self.accuDB.search(User.name == player)[0]['accuracyList']
-        self.wpmList = self.wpmDB.search(User.name == player)[0]['wpmList']
+        self.accuList = self.accuDB.search(User.name == self.player)[0]['accuracyList']
+        self.wpmList = self.wpmDB.search(User.name == self.player)[0]['wpmList']
         
         print(self.accuList)
         print(self.wpmList)
 
-        accu = self.accuDB.search(User.name == player)[0]['accuracy']
-        wpm = self.wpmDB.search(User.name == player)[0]['wpm']
+        accu = self.accuDB.search(User.name == self.player)[0]['accuracy']
+        wpm = self.wpmDB.search(User.name == self.player)[0]['wpm']
 
         Aypoints = np.array(self.accuList)
         Wypoints = np.array(self.wpmList)
@@ -866,14 +891,14 @@ QPushButton#restartButton:hover {
     background-image: url(files/pictures/restart_hover.png);
 }
 
-QPushButton#chooseParagraph:hover, QPushButton#chooseRandom:hover, QPushButton#login:hover, QPushButton#create:hover {
+QPushButton#windowPickButton:hover, QPushButton#login:hover, QPushButton#create:hover {
     color: #D1D0C5;
 }
-QPushButton#chooseParagraph:pressed, QPushButton#chooseRandom:pressed, QPushButton#login:pressed, QPushButton#create:pressed {
+QPushButton#windowPickButton:pressed, QPushButton#login:pressed, QPushButton#create:pressed {
     color: #E2B714;
 }
 
-QPushButton#chooseParagraph, QPushButton#chooseRandom, QPushButton#login, QPushButton#create {
+QPushButton#windowPickButton, QPushButton#login, QPushButton#create {
     color: rgb(100, 102, 105);
 }
 
@@ -882,13 +907,27 @@ QTextEdit#UserTE, QTextEdit#PassTE {
 }
 """    
 
+def main():
+    app = QApplication(sys.argv)
+    app.setStyleSheet(stylesheet)
+    with open("files/account/currentPlayer.txt", "r") as file:
+        currentPlayer = file.read()
+        if currentPlayer != "":
+            win = WindowPick(currentPlayer, LogIn())
+        else:
+            win = LogIn()
+    win.show()
+    sys.exit(app.exec_())
 
-app = QApplication(sys.argv)
-app.setStyleSheet(stylesheet)
-win = LogIn()
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+#win = LogIn()
 #win = WindowPick()
 #win = Window('random', 200)
 #win = Window("paragraph", None)
 #win = History()
-win.show()
-sys.exit(app.exec_())
